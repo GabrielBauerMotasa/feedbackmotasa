@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const Feedback = require("../models/Feedback");
 
+
 const connectToDatabase = async () => {
   if (mongoose.connection.readyState === 1) {
     // Já conectado
