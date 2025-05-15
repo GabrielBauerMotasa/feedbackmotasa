@@ -1,75 +1,54 @@
-// functions/feedback.js
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
+const Feedback = require("../models/Feedback");
 
-const uri = process.env.MONGODB_URI; // sua string de conexão MongoDB no Netlify env vars
-
-// Definindo o schema (só na primeira execução, evitar recompilar)
-const FeedbackSchema = new mongoose.Schema({
-  rating: { type: Number, required: true },
-  comment: { type: String, default: "" },
-  ip_address: { type: String, default: "" },
-  created_at: { type: Date, default: Date.now },
-  empresa: { type: String, default: null }
-});
-
-const Feedback = mongoose.models.Feedback || mongoose.model('Feedback', FeedbackSchema);
-
-// Garantindo conexão singleton com MongoDB para evitar reconexões
-let conn = null;
-async function connectToDB() {
-  if (conn && mongoose.connection.readyState === 1) {
-    return conn;
+const connectToDatabase = async () => {
+  if (mongoose.connection.readyState === 1) {
+    // Já conectado
+    return;
   }
-  conn = await mongoose.connect(uri, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  });
-  return conn;
-}
+
+  try {
+    await mongoose.connect(`mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@feedbacks-db.rlflddv.mongodb.net/?retryWrites=true&w=majority`);
+  } catch (error) {
+    console.error("Erro ao conectar ao MongoDB:", error);
+    throw error;
+  }
+};
 
 exports.handler = async function(event, context) {
-  if (event.httpMethod !== 'POST') {
+  if (event.httpMethod !== "POST") {
     return {
       statusCode: 405,
-      body: JSON.stringify({ error: 'Método não permitido, use POST' }),
+      body: JSON.stringify({ error: "Método não permitido, use POST" }),
     };
   }
 
-  await connectToDB();
-
   try {
-    const data = JSON.parse(event.body);
-    const { rating, comment, empresa } = data;
+    await connectToDatabase();
 
-    if (!rating) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'Campo rating é obrigatório' }),
-      };
-    }
+    const { rating, comment, empresa } = JSON.parse(event.body);
 
-    const ip_address = event.headers['client-ip'] || event.headers['x-forwarded-for'] || 'IP não detectado';
+    const ipAddress = event.headers["x-forwarded-for"] || event.headers["client-ip"] || "unknown";
+    const now = new Date();
+    const brNow = new Date(now.getTime() - 3 * 60 * 60 * 1000); // Ajuste horário Brasil
 
-    const feedback = new Feedback({
+    const feedback = await Feedback.create({
       rating,
-      comment: comment || '',
+      comment,
+      ip_address: ipAddress,
+      created_at: brNow,
       empresa: empresa || null,
-      ip_address,
-      created_at: new Date()
     });
-
-    const savedFeedback = await feedback.save();
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ message: 'Feedback salvo com sucesso', data: savedFeedback }),
+      body: JSON.stringify({ message: "Feedback enviado com sucesso", data: feedback }),
     };
-
   } catch (error) {
-    console.error('Erro na função feedback:', error);
+    console.error("Erro na função feedback:", error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'Erro interno ao salvar feedback' }),
+      body: JSON.stringify({ error: "Erro interno no servidor" }),
     };
   }
 };
