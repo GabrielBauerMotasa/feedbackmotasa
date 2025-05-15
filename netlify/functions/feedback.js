@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const Feedback = require("../models/Feedback");
+const Feedback = require("./models/Feedback");
 
 
 const connectToDatabase = async () => {
