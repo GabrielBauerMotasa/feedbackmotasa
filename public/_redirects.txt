@@ -1,1 +1,0 @@
-/api/*  /.netlify/functions/handler/:splat  200
