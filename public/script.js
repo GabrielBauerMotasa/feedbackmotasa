@@ -33,7 +33,8 @@ document.addEventListener("DOMContentLoaded", function () {
         messageElement.style.display = "none"; // Limpa qualquer mensagem anterior
 
         try {
-            const response = await fetch("https://feedbackmotasa1.netlify.app/api/feedback", {
+            const response = await fetch("https://feedbackmotasa1.netlify.app/.netlify/functions/feedback", {
+
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(feedback)
