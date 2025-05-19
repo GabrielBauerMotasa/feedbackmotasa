@@ -1,5 +1,5 @@
 const connectToDatabase = require('../../db');
-const Feedback = require('../../models/Feedback');
+const Feedback = require('./models/Feedback');
 require('dotenv').config();
 
 let dbConnected = false;
