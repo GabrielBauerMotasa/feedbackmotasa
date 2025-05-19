@@ -40,7 +40,7 @@ document.addEventListener("DOMContentLoaded", function () {
         submitBtn.style.display = "none";
 
         try {
-            const response = await fetch("https://feedbackmotasa1.netlify.app/.netlify/functions/feedback", {
+            const response = await fetch("https://feedbackmotasa.netlify.app/.netlify/functions/feedback", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(feedback)
