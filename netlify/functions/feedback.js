@@ -6,10 +6,9 @@ let dbConnected = false;
 
 const allowedOrigins = [
   'https://feedbackmotasa.netlify.app',
-  'https://feedbackmotasa1.netlify.app',
 ];
 
-exports.handler = async function(event, context) {
+exports.handler = async function (event, context) {
   // Conectar ao banco só uma vez
   if (!dbConnected) {
     await connectToDatabase();
@@ -19,11 +18,14 @@ exports.handler = async function(event, context) {
   const origin = event.headers.origin || '';
 
   // Define os headers CORS, permitindo apenas origens autorizadas
-  const headers = {
-    'Access-Control-Allow-Origin': allowedOrigins.includes(origin) ? origin : '',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  };
+  const headers = {};
+
+  if (allowedOrigins.includes(origin)) {
+    headers['Access-Control-Allow-Origin'] = origin;
+    headers['Access-Control-Allow-Headers'] = 'Content-Type';
+    headers['Access-Control-Allow-Methods'] = 'POST, OPTIONS';
+  }
+
 
   // Responder preflight OPTIONS para CORS
   if (event.httpMethod === 'OPTIONS') {
