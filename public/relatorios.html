@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Relatório de Feedbacks</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f4f7f9;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 25px;
+      color: #0077cc;
+    }
+
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+      justify-content: center;
+    }
+
+    .filters input[type="text"],
+    .filters input[type="date"] {
+      padding: 8px 12px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      width: 180px;
+      font-size: 14px;
+    }
+
+    .filters button {
+      background-color: #0077cc;
+      border: none;
+      color: white;
+      padding: 9px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background-color 0.3s ease;
+    }
+
+    .filters button:hover:not(:disabled) {
+      background-color: #005fa3;
+    }
+
+    .filters button:disabled {
+      background-color: #99b9d9;
+      cursor: not-allowed;
+    }
+
+    .table-wrapper {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    thead {
+      background-color: #0077cc;
+      color: white;
+    }
+
+    thead th {
+      padding: 12px 15px;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid #ddd;
+    }
+
+    tbody tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+
+    tbody td {
+      padding: 12px 15px;
+      vertical-align: top;
+      word-break: break-word;
+    }
+
+    .loading {
+      text-align: center;
+      margin-top: 15px;
+      font-weight: 600;
+      color: #0077cc;
+    }
+
+    .message {
+      margin-top: 15px;
+      text-align: center;
+      font-weight: 600;
+      color: red;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Relatório de Feedbacks</h1>
+
+    <div class="filters">
+      <input type="text" id="filterEmpresa" placeholder="Filtrar por empresa" />
+      <input type="date" id="filterStartDate" />
+      <input type="date" id="filterEndDate" />
+      <button id="btnFilter">Filtrar</button>
+      <button id="btnReset">Limpar Filtros</button>
+      <button id="btnExport">Exportar CSV</button>
+    </div>
+
+    <div class="table-wrapper">
+      <table id="feedbackTable">
+        <thead>
+          <tr>
+            <th>Empresa</th>
+            <th>Rating</th>
+            <th>Comentário</th>
+            <th>Data</th>
+            <th>IP</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Dados carregados aqui -->
+        </tbody>
+      </table>
+    </div>
+
+    <div id="loading" class="loading" style="display:none;">Carregando...</div>
+    <div id="message" class="message"></div>
+  </div>
+
+  <script>
+    const SECRET_ID = "a7f9c3b1d4e6f8a2c5b7d9e0"; // Substitua pelo seu id secreto real
+    const BASE_API_URL = "https://feedbackmotasa.netlify.app/.netlify/functions/relatorio";
+
+    const tableBody = document.querySelector("#feedbackTable tbody");
+    const loading = document.getElementById("loading");
+    const message = document.getElementById("message");
+    const filterEmpresa = document.getElementById("filterEmpresa");
+    const filterStartDate = document.getElementById("filterStartDate");
+    const filterEndDate = document.getElementById("filterEndDate");
+    const btnFilter = document.getElementById("btnFilter");
+    const btnReset = document.getElementById("btnReset");
+    const btnExport = document.getElementById("btnExport");
+
+    let feedbacks = [];
+
+    function formatDateBR(dateStr) {
+      const d = new Date(dateStr);
+      return d.toLocaleDateString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function setButtonsDisabled(state) {
+      btnFilter.disabled = state;
+      btnReset.disabled = state;
+      btnExport.disabled = state;
+    }
+
+    // Função que monta a query string com filtros + id secreto
+    function buildQueryString() {
+      const params = new URLSearchParams();
+      params.append("id", SECRET_ID);
+
+      if (filterEmpresa.value.trim() !== "") {
+        params.append("empresa", filterEmpresa.value.trim());
+      }
+      if (filterStartDate.value) {
+        params.append("startDate", filterStartDate.value);
+      }
+      if (filterEndDate.value) {
+        params.append("endDate", filterEndDate.value);
+      }
+
+      return params.toString();
+    }
+
+    // Busca feedbacks do servidor com filtros via query string
+    function loadFeedbacks() {
+      setButtonsDisabled(true);
+      loading.style.display = "block";
+      message.textContent = "";
+      tableBody.innerHTML = "";
+
+      const queryString = buildQueryString();
+      const url = `${BASE_API_URL}?${queryString}`;
+
+      fetch(url)
+        .then(res => {
+          if (!res.ok) throw new Error("Erro ao carregar dados");
+          return res.json();
+        })
+        .then(data => {
+          feedbacks = data.data || [];
+          if (feedbacks.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Nenhum feedback encontrado.</td></tr>`;
+          } else {
+            renderTable(feedbacks);
+          }
+          loading.style.display = "none";
+          setButtonsDisabled(false);
+        })
+        .catch(err => {
+          loading.style.display = "none";
+          message.textContent = err.message || "Erro ao carregar dados.";
+          setButtonsDisabled(false);
+        });
+    }
+
+    function renderTable(data) {
+      tableBody.innerHTML = "";
+      data.forEach(fb => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${fb.empresa || "-"}</td>
+          <td>${fb.rating || "-"}</td>
+          <td>${fb.comment || "-"}</td>
+          <td>${formatDateBR(fb.created_at || fb.createdAt || fb.date)}</td>
+          <td>${fb.ip_address || "-"}</td>
+        `;
+        tableBody.appendChild(tr);
+      });
+    }
+
+    function resetFilters() {
+      filterEmpresa.value = "";
+      filterStartDate.value = "";
+      filterEndDate.value = "";
+      message.textContent = "";
+      loadFeedbacks();
+    }
+
+    function exportToCSV() {
+      if (!feedbacks.length) {
+        message.textContent = "Nada para exportar.";
+        return;
+      }
+      let csv = "Empresa,Rating,Comentário,Data,IP\n";
+      feedbacks.forEach(fb => {
+        const row = [
+          fb.empresa || "",
+          fb.rating || "",
+          fb.comment || "",
+          formatDateBR(fb.created_at || fb.createdAt || fb.date),
+          fb.ip_address || "",
+        ];
+        const escapedRow = row.map(col => `"${col.replace(/"/g, '""')}"`);
+        csv += escapedRow.join(",") + "\n";
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'relatorio_feedbacks.csv';
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    btnFilter.addEventListener("click", () => {
+      message.textContent = "";
+      loadFeedbacks();
+    });
+    btnReset.addEventListener("click", resetFilters);
+    btnExport.addEventListener("click", exportToCSV);
+
+    // Carrega inicialmente sem filtros
+    loadFeedbacks();
+
+  </script>
+</body>
+
+</html>
