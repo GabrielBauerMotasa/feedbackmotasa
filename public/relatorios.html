@@ -314,7 +314,8 @@
           formatDateBR(fb.created_at || fb.createdAt || fb.date),
           fb.ip_address || "",
         ];
-        const escapedRow = row.map(col => `"${col.replace(/"/g, '""')}"`);
+        const escapedRow = row.map(col => `"${String(col).replace(/"/g, '""')}"`);
+
         csv += escapedRow.join(",") + "\n";
       });
 
