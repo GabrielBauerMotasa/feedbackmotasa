@@ -154,7 +154,8 @@
   </div>
 
   <script>
-    const BASE_API_URL = "https://feedbackmotasa.netlify.app/relatorios.html?id=a7f9c3b1d4e6f8a2c5b7d9e0";
+    const BASE_API_URL = "/.netlify/functions/relatorio";
+
 
     const urlParams = new URLSearchParams(window.location.search);
     const SECRET_ID = urlParams.get("id");
