@@ -124,12 +124,12 @@
     <h1>Relatório de Feedbacks</h1>
 
     <div class="filters">
-      <input type="text" id="filterEmpresa" placeholder="Filtrar por empresa" />
-      <input type="date" id="filterStartDate" />
-      <input type="date" id="filterEndDate" />
-      <button id="btnFilter">Filtrar</button>
-      <button id="btnReset">Limpar Filtros</button>
-      <button id="btnExport">Exportar CSV</button>
+      <input type="text" id="filterEmpresa" placeholder="Filtrar por empresa" aria-label="Filtrar por empresa" />
+      <input type="date" id="filterStartDate" aria-label="Data inicial do filtro" />
+      <input type="date" id="filterEndDate" aria-label="Data final do filtro" />
+      <button id="btnFilter" aria-label="Filtrar feedbacks" disabled>Filtrar</button>
+      <button id="btnReset" aria-label="Limpar filtros">Limpar Filtros</button>
+      <button id="btnExport" aria-label="Exportar feedbacks para CSV">Exportar CSV</button>
     </div>
 
     <div class="table-wrapper">
@@ -154,8 +154,20 @@
   </div>
 
   <script>
-    const SECRET_ID = "a7f9c3b1d4e6f8a2c5b7d9e0"; // Substitua pelo seu id secreto real
-    const BASE_API_URL = "https://feedbackmotasa.netlify.app/.netlify/functions/relatorio";
+    const urlParams = new URLSearchParams(window.location.search);
+    const SECRET_ID = urlParams.get("id");
+
+    if (!SECRET_ID) {
+      document.body.style.height = "100vh";
+      document.body.style.margin = "0";
+      document.body.style.display = "flex";
+      document.body.style.justifyContent = "center";
+      document.body.style.alignItems = "center";
+      document.body.style.backgroundColor = "#fff"; // opcional
+      document.body.innerHTML = '<h2 style="color:red; font-size:1.5rem; text-align:center;">Acesso negado. ID secreto obrigatório na URL.</h2>';
+      throw new Error("ID secreto não informado");
+    }
+
 
     const tableBody = document.querySelector("#feedbackTable tbody");
     const loading = document.getElementById("loading");
@@ -171,13 +183,40 @@
 
     function formatDateBR(dateStr) {
       const d = new Date(dateStr);
-      return d.toLocaleDateString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      if (isNaN(d)) return "-";
+      return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
     }
 
     function setButtonsDisabled(state) {
       btnFilter.disabled = state;
       btnReset.disabled = state;
       btnExport.disabled = state;
+    }
+
+    function validateFilters() {
+      message.textContent = "";
+
+      const start = filterStartDate.value;
+      const end = filterEndDate.value;
+
+      if (start && end && start > end) {
+        message.textContent = "Data inicial não pode ser maior que a data final.";
+        return false;
+      }
+      return true;
+    }
+
+    function areFiltersEmpty() {
+      return (
+        filterEmpresa.value.trim() === "" &&
+        filterStartDate.value === "" &&
+        filterEndDate.value === ""
+      );
+    }
+
+    // Atualiza estado do botão Filtrar
+    function updateFilterButtonState() {
+      btnFilter.disabled = areFiltersEmpty();
     }
 
     // Função que monta a query string com filtros + id secreto
@@ -200,6 +239,8 @@
 
     // Busca feedbacks do servidor com filtros via query string
     function loadFeedbacks() {
+      if (!validateFilters()) return;
+
       setButtonsDisabled(true);
       loading.style.display = "block";
       message.textContent = "";
@@ -222,11 +263,13 @@
           }
           loading.style.display = "none";
           setButtonsDisabled(false);
+          updateFilterButtonState();
         })
         .catch(err => {
           loading.style.display = "none";
           message.textContent = err.message || "Erro ao carregar dados.";
           setButtonsDisabled(false);
+          updateFilterButtonState();
         });
     }
 
@@ -250,6 +293,7 @@
       filterStartDate.value = "";
       filterEndDate.value = "";
       message.textContent = "";
+      updateFilterButtonState();
       loadFeedbacks();
     }
 
@@ -283,6 +327,11 @@
       URL.revokeObjectURL(url);
     }
 
+    // Eventos para atualizar estado do botão Filtrar conforme inputs mudam
+    filterEmpresa.addEventListener("input", updateFilterButtonState);
+    filterStartDate.addEventListener("input", updateFilterButtonState);
+    filterEndDate.addEventListener("input", updateFilterButtonState);
+
     btnFilter.addEventListener("click", () => {
       message.textContent = "";
       loadFeedbacks();
@@ -292,7 +341,6 @@
 
     // Carrega inicialmente sem filtros
     loadFeedbacks();
-
   </script>
 </body>
 
