@@ -136,7 +136,7 @@
       <table id="feedbackTable">
         <thead>
           <tr>
-            <th>Empresa</th>
+            <th>Empresa/Nome</th>
             <th>Estrelas</th>
             <th>Comentário</th>
             <th>Data</th>
@@ -305,7 +305,7 @@
         message.textContent = "Nada para exportar.";
         return;
       }
-      let csv = "Empresa,Rating,Comentário,Data,IP\n";
+      let csv = "Empresa/Nome,Estrelas,Comentário,Data,IP\n";
       feedbacks.forEach(fb => {
         const row = [
           fb.empresa || "",
