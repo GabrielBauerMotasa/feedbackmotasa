@@ -301,6 +301,7 @@
     }
 
     function exportToCSV() {
+      console.log('Exportar feedbacks: ', feedbacks)
       if (!feedbacks.length) {
         message.textContent = "Nada para exportar.";
         return;
