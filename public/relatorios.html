@@ -116,6 +116,63 @@
       font-weight: 600;
       color: red;
     }
+
+    @media (max-width: 600px) {
+      .filters {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .filters input[type="text"],
+      .filters input[type="date"],
+      .filters button {
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+      }
+
+      .filters button {
+        margin-top: 8px;
+      }
+
+      table thead {
+        display: none;
+        /* Oculta cabeçalho para facilitar leitura em celular */
+      }
+
+      table,
+      tbody,
+      tr,
+      td {
+        display: block;
+        width: 100%;
+      }
+
+      tbody tr {
+        margin-bottom: 15px;
+        border-bottom: 2px solid #0077cc;
+        padding-bottom: 10px;
+      }
+
+      tbody td {
+        padding-left: 50%;
+        position: relative;
+        text-align: left;
+        border: none;
+        border-bottom: 1px solid #ddd;
+      }
+
+      tbody td::before {
+        position: absolute;
+        top: 12px;
+        left: 15px;
+        width: 45%;
+        white-space: nowrap;
+        font-weight: 700;
+        color: #0077cc;
+        content: attr(data-label);
+      }
+    }
   </style>
 </head>
 
@@ -280,15 +337,16 @@
       data.forEach(fb => {
         const tr = document.createElement("tr");
         tr.innerHTML = `
-          <td>${fb.empresa || "-"}</td>
-          <td>${fb.rating || "-"}</td>
-          <td>${fb.comment || "-"}</td>
-          <td>${formatDateBR(fb.created_at || fb.createdAt || fb.date)}</td>
-          <td>${fb.ip_address || "-"}</td>
-        `;
+      <td data-label="Empresa/Nome">${fb.empresa || "-"}</td>
+      <td data-label="Estrelas">${fb.rating || "-"}</td>
+      <td data-label="Comentário">${fb.comment || "-"}</td>
+      <td data-label="Data">${formatDateBR(fb.created_at || fb.createdAt || fb.date)}</td>
+      <td data-label="IP">${fb.ip_address || "-"}</td>
+    `;
         tableBody.appendChild(tr);
       });
     }
+
 
     function resetFilters() {
       filterEmpresa.value = "";
