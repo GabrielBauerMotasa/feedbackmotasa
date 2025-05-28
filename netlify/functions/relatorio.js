@@ -11,7 +11,7 @@ const ALLOWED_ORIGINS = [
 // ID secreto para acessar o relatório, guardado no .env
 const REPORT_SECRET_ID = process.env.REPORT_SECRET_ID;
 
-exports.handler = async function(event, context) {
+exports.handler = async function (event, context) {
   // CORS
   const origin = event.headers.origin || '';
   const headers = {
@@ -58,8 +58,8 @@ exports.handler = async function(event, context) {
     // Monta filtros opcionais
     const filters = {};
 
-    if (params.empresa) {
-      filters.empresa = { $regex: new RegExp(params.empresa, 'i') };
+    if (params.vendedor) {
+      filters.vendedor = { $regex: new RegExp(params.vendedor, 'i') };
     }
     if (params.startDate) {
       filters.created_at = filters.created_at || {};
