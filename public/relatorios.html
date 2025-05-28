@@ -105,72 +105,18 @@
 
     .loading {
       text-align: center;
-      margin-top: 15px;
-      font-weight: 600;
+      padding: 15px;
+      font-weight: bold;
       color: #4E2A1E;
     }
 
-    .message {
-      margin-top: 15px;
-      text-align: center;
-      font-weight: 600;
-      color: red;
+    .stars {
+      color: #d4af37;
+      font-size: 16px;
     }
 
-    @media (max-width: 600px) {
-      .filters {
-        flex-direction: column;
-        align-items: stretch;
-      }
-
-      .filters input[type="text"],
-      .filters input[type="date"],
-      .filters button {
-        width: 100%;
-        max-width: 100%;
-        box-sizing: border-box;
-      }
-
-      .filters button {
-        margin-top: 8px;
-      }
-
-      table thead {
-        display: none;
-      }
-
-      table,
-      tbody,
-      tr,
-      td {
-        display: block;
-        width: 100%;
-      }
-
-      tbody tr {
-        margin-bottom: 15px;
-        border-bottom: 2px solid #4E2A1E;
-        padding-bottom: 10px;
-      }
-
-      tbody td {
-        padding-left: 50%;
-        position: relative;
-        text-align: left;
-        border: none;
-        border-bottom: 1px solid #4E2A1E;
-      }
-
-      tbody td::before {
-        position: absolute;
-        top: 12px;
-        left: 15px;
-        width: 45%;
-        white-space: nowrap;
-        font-weight: 700;
-        color: #4E2A1E;
-        content: attr(data-label);
-      }
+    .stars .empty {
+      color: #ccc;
     }
   </style>
 </head>
@@ -180,227 +126,132 @@
     <h1>Relatório de Feedbacks</h1>
 
     <div class="filters">
-      <input type="text" id="filterEmpresa" placeholder="Filtrar por empresa" aria-label="Filtrar por empresa" />
-      <input type="date" id="filterStartDate" aria-label="Data inicial do filtro" />
-      <input type="date" id="filterEndDate" aria-label="Data final do filtro" />
-      <button id="btnFilter" aria-label="Filtrar feedbacks" disabled>Filtrar</button>
-      <button id="btnReset" aria-label="Limpar filtros">Limpar Filtros</button>
-      <button id="btnExport" aria-label="Exportar feedbacks para CSV">Exportar CSV</button>
+      <input type="text" id="filterEmpresa" placeholder="Filtrar por empresa/nome" />
+      <input type="text" id="filterVendedor" placeholder="Filtrar por vendedor" />
+      <input type="date" id="filterDataInicio" />
+      <input type="date" id="filterDataFim" />
+      <button id="btnFiltrar">Filtrar</button>
+      <button id="btnLimpar" disabled>Limpar</button>
     </div>
 
     <div class="table-wrapper">
-      <table id="feedbackTable">
+      <table>
         <thead>
           <tr>
             <th>Vendedor</th>
-            <th>Estrelas</th>
+            <th>Empresa/Nome</th>
             <th>Comentário</th>
-            <th>Data</th>
+            <th>Estrelas</th>
             <th>IP</th>
+            <th>Data</th>
           </tr>
         </thead>
-        <tbody>
-          <!-- Dados carregados aqui -->
+        <tbody id="tableBody">
+          <!-- Feedbacks serão inseridos aqui -->
         </tbody>
       </table>
+      <div class="loading" id="loading" style="display:none;">Carregando...</div>
     </div>
-
-    <div id="loading" class="loading" style="display:none;">Carregando...</div>
-    <div id="message" class="message"></div>
   </div>
 
   <script>
-    const BASE_API_URL = "/.netlify/functions/relatorio";
+    const feedbacks = [
+      {
+        vendedor: "João Silva",
+        empresa: "Empresa A",
+        comentario: "Ótimo atendimento!",
+        estrelas: 5,
+        ip: "192.168.0.1",
+        data: "2025-05-01"
+      },
+      {
+        vendedor: "Maria Souza",
+        empresa: "Empresa B",
+        comentario: "Pode melhorar.",
+        estrelas: 3,
+        ip: "192.168.0.2",
+        data: "2025-05-02"
+      },
+      // Outros feedbacks...
+    ];
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const SECRET_ID = urlParams.get("id");
-
-    if (!SECRET_ID) {
-      document.body.style.height = "100vh";
-      document.body.style.margin = "0";
-      document.body.style.display = "flex";
-      document.body.style.justifyContent = "center";
-      document.body.style.alignItems = "center";
-      document.body.style.backgroundColor = "#fff";
-      document.body.innerHTML = '<h2 style="color:red; font-size:1.5rem; text-align:center;">Acesso negado. ID secreto obrigatório na URL.</h2>';
-      throw new Error("ID secreto não informado");
-    }
-
-    const tableBody = document.querySelector("#feedbackTable tbody");
+    const tableBody = document.getElementById("tableBody");
     const loading = document.getElementById("loading");
-    const message = document.getElementById("message");
+    const btnFiltrar = document.getElementById("btnFiltrar");
+    const btnLimpar = document.getElementById("btnLimpar");
+
     const filterEmpresa = document.getElementById("filterEmpresa");
-    const filterStartDate = document.getElementById("filterStartDate");
-    const filterEndDate = document.getElementById("filterEndDate");
-    const btnFilter = document.getElementById("btnFilter");
-    const btnReset = document.getElementById("btnReset");
-    const btnExport = document.getElementById("btnExport");
+    const filterVendedor = document.getElementById("filterVendedor");
+    const filterDataInicio = document.getElementById("filterDataInicio");
+    const filterDataFim = document.getElementById("filterDataFim");
 
-    let feedbacks = [];
-
-    function formatDateBR(dateStr) {
-      const d = new Date(dateStr);
-      if (isNaN(d)) return "-";
-      return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-    }
-
-    function setButtonsDisabled(state) {
-      btnFilter.disabled = state;
-      btnReset.disabled = state;
-    }
-
-    function validateFilters() {
-      message.textContent = "";
-
-      const start = filterStartDate.value;
-      const end = filterEndDate.value;
-
-      if (start && end && start > end) {
-        message.textContent = "Data inicial não pode ser maior que a data final.";
-        return false;
+    function criarEstrelas(qtd) {
+      let estrelasHTML = "";
+      for (let i = 1; i <= 5; i++) {
+        estrelasHTML += i <= qtd ? "&#9733;" : "<span class='empty'>&#9733;</span>";
       }
-      return true;
+      return `<span class="stars">${estrelasHTML}</span>`;
     }
 
-    function areFiltersEmpty() {
-      return (
-        filterEmpresa.value.trim() === "" &&
-        filterStartDate.value === "" &&
-        filterEndDate.value === ""
-      );
-    }
-
-    function updateFilterButtonState() {
-      btnFilter.disabled = areFiltersEmpty();
-    }
-
-    function buildQueryString() {
-      const params = new URLSearchParams();
-      params.append("id", SECRET_ID);
-
-      if (filterEmpresa.value.trim() !== "") {
-        params.append("empresa", filterEmpresa.value.trim());
-      }
-      if (filterStartDate.value) {
-        params.append("startDate", filterStartDate.value);
-      }
-      if (filterEndDate.value) {
-        params.append("endDate", filterEndDate.value);
-      }
-
-      return params.toString();
-    }
-
-    function loadFeedbacks() {
-      if (!validateFilters()) return;
-
-      setButtonsDisabled(true);
-      loading.style.display = "block";
-      message.textContent = "";
+    function carregarTabela(dados) {
       tableBody.innerHTML = "";
-
-      const queryString = buildQueryString();
-      const url = `${BASE_API_URL}?${queryString}`;
-
-      fetch(url)
-        .then(res => {
-          if (!res.ok) throw new Error("Erro ao carregar dados");
-          return res.json();
-        })
-        .then(data => {
-          feedbacks = data.data || [];
-          if (feedbacks.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px;">Nenhum feedback encontrado.</td></tr>`;
-          } else {
-            renderTable(feedbacks);
-          }
-        })
-        .catch(err => {
-          message.textContent = err.message || "Erro ao carregar os dados.";
-        })
-        .finally(() => {
-          loading.style.display = "none";
-          setButtonsDisabled(false);
-        });
-    }
-
-    function renderTable(data) {
-      tableBody.innerHTML = data.map(fb => `
-        <tr>
-          <td data-label="Vendedor">${fb.vendedor || "-"}</td>
-          <td data-label="Estrelas">${"★".repeat(fb.estrelas || 0)}${"☆".repeat(5 - (fb.estrelas || 0))}</td>
-          <td data-label="Comentário">${fb.comentario || "-"}</td>
-          <td data-label="Data">${formatDateBR(fb.data) || "-"}</td>
-          <td data-label="IP">${fb.ip || "-"}</td>
-        </tr>
-      `).join("");
-    }
-
-    function exportToCSV() {
-      if (feedbacks.length === 0) {
-        alert("Não há dados para exportar.");
+      if (dados.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">Nenhum feedback encontrado.</td></tr>`;
         return;
       }
-
-      const headers = ["Vendedor", "Estrelas", "Comentário", "Data", "IP"];
-      const rows = feedbacks.map(fb => [
-        `"${fb.vendedor || ""}"`,
-        `"${fb.estrelas || ""}"`,
-        `"${(fb.comentario || "").replace(/"/g, '""')}"`,
-        `"${formatDateBR(fb.data) || ""}"`,
-        `"${fb.ip || ""}"`
-      ]);
-
-      let csvContent = headers.join(";") + "\n";
-      rows.forEach(row => {
-        csvContent += row.join(";") + "\n";
+      dados.forEach(fb => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${fb.vendedor}</td>
+          <td>${fb.empresa}</td>
+          <td>${fb.comentario}</td>
+          <td>${criarEstrelas(fb.estrelas)}</td>
+          <td>${fb.ip}</td>
+          <td>${fb.data}</td>
+        `;
+        tableBody.appendChild(tr);
       });
-
-      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = "relatorio_feedbacks.csv";
-      link.style.display = "none";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
     }
 
-    filterEmpresa.addEventListener("input", () => {
-      updateFilterButtonState();
-      if (message.textContent) message.textContent = "";
-    });
+    function filtrar() {
+      let filtrados = feedbacks;
 
-    filterStartDate.addEventListener("change", () => {
-      updateFilterButtonState();
-      if (message.textContent) message.textContent = "";
-    });
+      const empresaVal = filterEmpresa.value.trim().toLowerCase();
+      const vendedorVal = filterVendedor.value.trim().toLowerCase();
+      const dataInicioVal = filterDataInicio.value;
+      const dataFimVal = filterDataFim.value;
 
-    filterEndDate.addEventListener("change", () => {
-      updateFilterButtonState();
-      if (message.textContent) message.textContent = "";
-    });
+      if (empresaVal) {
+        filtrados = filtrados.filter(fb => fb.empresa.toLowerCase().includes(empresaVal));
+      }
+      if (vendedorVal) {
+        filtrados = filtrados.filter(fb => fb.vendedor.toLowerCase().includes(vendedorVal));
+      }
+      if (dataInicioVal) {
+        filtrados = filtrados.filter(fb => fb.data >= dataInicioVal);
+      }
+      if (dataFimVal) {
+        filtrados = filtrados.filter(fb => fb.data <= dataFimVal);
+      }
 
-    btnFilter.addEventListener("click", () => {
-      loadFeedbacks();
-    });
+      carregarTabela(filtrados);
 
-    btnReset.addEventListener("click", () => {
+      btnLimpar.disabled = !(empresaVal || vendedorVal || dataInicioVal || dataFimVal);
+    }
+
+    btnFiltrar.addEventListener("click", filtrar);
+
+    btnLimpar.addEventListener("click", () => {
       filterEmpresa.value = "";
-      filterStartDate.value = "";
-      filterEndDate.value = "";
-      message.textContent = "";
-      btnFilter.disabled = true;
-      tableBody.innerHTML = "";
-      feedbacks = [];
+      filterVendedor.value = "";
+      filterDataInicio.value = "";
+      filterDataFim.value = "";
+      carregarTabela(feedbacks);
+      btnLimpar.disabled = true;
     });
 
-    btnExport.addEventListener("click", () => {
-      exportToCSV();
-    });
-
-    // Carregar dados inicialmente (sem filtro)
-    loadFeedbacks();
+    // Carrega todos ao iniciar
+    carregarTabela(feedbacks);
   </script>
 </body>
 
