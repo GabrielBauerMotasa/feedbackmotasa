@@ -1,4 +1,6 @@
 document.addEventListener("DOMContentLoaded", function () {
+  const vendedoresValidos = [123]; // Coloque os vendedores autorizados aqui (números)
+
   const stars = document.querySelectorAll(".rating-box label");
   let lastChecked = null;
 
@@ -47,8 +49,8 @@ document.addEventListener("DOMContentLoaded", function () {
     const vendedorId = urlParams.get("vendedor");
 
     // VALIDAÇÃO DO VENDEDOR - INÍCIO
-    const vendedoresValidos = ['123']; // ajuste para seus valores
-    if (!vendedorId || !vendedoresValidos.includes(vendedorId.toLowerCase())) {
+    const vendedorNum = Number(vendedorId);
+    if (!vendedorId || !vendedoresValidos.includes(vendedorNum)) {
       alert("Vendedor inválido ou não autorizado.");
       return;
     }
@@ -59,7 +61,7 @@ document.addEventListener("DOMContentLoaded", function () {
       rating: parseInt(ratingInput.value),
       comment: feedbackText,
       empresa: empresaInput,
-      vendedor: vendedorId 
+      vendedor: vendedorId
     };
 
     messageElement.style.display = "none";
