@@ -46,6 +46,14 @@ document.addEventListener("DOMContentLoaded", function () {
     const urlParams = new URLSearchParams(window.location.search);
     const vendedorId = urlParams.get("vendedor");
 
+    // VALIDAÇÃO DO VENDEDOR - INÍCIO
+    const vendedoresValidos = ['123']; // ajuste para seus valores
+    if (!vendedorId || !vendedoresValidos.includes(vendedorId.toLowerCase())) {
+      alert("Vendedor inválido ou não autorizado.");
+      return;
+    }
+    // VALIDAÇÃO DO VENDEDOR - FIM
+
 
     const feedback = {
       rating: parseInt(ratingInput.value),
@@ -53,7 +61,6 @@ document.addEventListener("DOMContentLoaded", function () {
       empresa: empresaInput,
       vendedor: vendedorId 
     };
-
 
     messageElement.style.display = "none";
     loadingElement.style.display = "inline-block";
