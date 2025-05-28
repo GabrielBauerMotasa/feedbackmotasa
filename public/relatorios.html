@@ -181,7 +181,7 @@
     <h1>Relatório de Feedbacks</h1>
 
     <div class="filters">
-      <input type="text" id="filterEmpresa" placeholder="Filtrar por empresa" aria-label="Filtrar por empresa" />
+      <input type="text" id="filterVendedor" placeholder="Filtrar por vendedor" aria-label="Filtrar por vendedor" />
       <input type="date" id="filterStartDate" aria-label="Data inicial do filtro" />
       <input type="date" id="filterEndDate" aria-label="Data final do filtro" />
       <button id="btnFilter" aria-label="Filtrar feedbacks" disabled>Filtrar</button>
@@ -233,7 +233,7 @@
     const tableBody = document.querySelector("#feedbackTable tbody");
     const loading = document.getElementById("loading");
     const message = document.getElementById("message");
-    const filterEmpresa = document.getElementById("filterEmpresa");
+    const filterVendedor = document.getElementById("filterVendedor");
     const filterStartDate = document.getElementById("filterStartDate");
     const filterEndDate = document.getElementById("filterEndDate");
     const btnFilter = document.getElementById("btnFilter");
@@ -268,7 +268,7 @@
 
     function areFiltersEmpty() {
       return (
-        filterEmpresa.value.trim() === "" &&
+        filterVendedor.value.trim() === "" &&
         filterStartDate.value === "" &&
         filterEndDate.value === ""
       );
@@ -284,8 +284,8 @@
       const params = new URLSearchParams();
       params.append("id", SECRET_ID);
 
-      if (filterEmpresa.value.trim() !== "") {
-        params.append("empresa", filterEmpresa.value.trim());
+      if (filterVendedor.value.trim() !== "") {
+        params.append("vendedor", filterVendedor.value.trim());
       }
       if (filterStartDate.value) {
         params.append("startDate", filterStartDate.value);
@@ -351,7 +351,7 @@
 
 
     function resetFilters() {
-      filterEmpresa.value = "";
+      filterVendedor.value = "";
       filterStartDate.value = "";
       filterEndDate.value = "";
       message.textContent = "";
@@ -365,7 +365,7 @@
         message.textContent = "Nada para exportar.";
         return;
       }
-      let csv = "Empresa/Nome,Estrelas,Comentário,Data,IP\n";
+      let csv = "Vendedor,Empresa/Nome,Estrelas,Comentário,Data,IP\n";
       feedbacks.forEach(fb => {
         const row = [
           fb.vendedor || "",
