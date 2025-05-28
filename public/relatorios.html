@@ -137,7 +137,6 @@
 
       table thead {
         display: none;
-        /* Oculta cabeçalho para facilitar leitura em celular */
       }
 
       table,
@@ -193,7 +192,7 @@
       <table id="feedbackTable">
         <thead>
           <tr>
-            <th>Empresa/Nome</th>
+            <th>Vendedor</th>
             <th>Estrelas</th>
             <th>Comentário</th>
             <th>Data</th>
@@ -213,7 +212,6 @@
   <script>
     const BASE_API_URL = "/.netlify/functions/relatorio";
 
-
     const urlParams = new URLSearchParams(window.location.search);
     const SECRET_ID = urlParams.get("id");
 
@@ -223,11 +221,10 @@
       document.body.style.display = "flex";
       document.body.style.justifyContent = "center";
       document.body.style.alignItems = "center";
-      document.body.style.backgroundColor = "#fff"; // opcional
+      document.body.style.backgroundColor = "#fff";
       document.body.innerHTML = '<h2 style="color:red; font-size:1.5rem; text-align:center;">Acesso negado. ID secreto obrigatório na URL.</h2>';
       throw new Error("ID secreto não informado");
     }
-
 
     const tableBody = document.querySelector("#feedbackTable tbody");
     const loading = document.getElementById("loading");
@@ -273,12 +270,10 @@
       );
     }
 
-    // Atualiza estado do botão Filtrar
     function updateFilterButtonState() {
       btnFilter.disabled = areFiltersEmpty();
     }
 
-    // Função que monta a query string com filtros + id secreto
     function buildQueryString() {
       const params = new URLSearchParams();
       params.append("id", SECRET_ID);
@@ -296,7 +291,6 @@
       return params.toString();
     }
 
-    // Busca feedbacks do servidor com filtros via query string
     function loadFeedbacks() {
       if (!validateFilters()) return;
 
@@ -316,94 +310,96 @@
         .then(data => {
           feedbacks = data.data || [];
           if (feedbacks.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Nenhum feedback encontrado.</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px;">Nenhum feedback encontrado.</td></tr>`;
           } else {
             renderTable(feedbacks);
           }
-          loading.style.display = "none";
-          setButtonsDisabled(false);
-          updateFilterButtonState();
         })
         .catch(err => {
+          message.textContent = err.message || "Erro ao carregar os dados.";
+        })
+        .finally(() => {
           loading.style.display = "none";
-          message.textContent = err.message || "Erro ao carregar dados.";
           setButtonsDisabled(false);
-          updateFilterButtonState();
         });
     }
 
     function renderTable(data) {
-      tableBody.innerHTML = "";
-      data.forEach(fb => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-      <td data-label="Empresa/Nome">${fb.empresa || "-"}</td>
-      <td data-label="Estrelas">${fb.rating || "-"}</td>
-      <td data-label="Comentário">${fb.comment || "-"}</td>
-      <td data-label="Data">${formatDateBR(fb.created_at || fb.createdAt || fb.date)}</td>
-      <td data-label="IP">${fb.ip_address || "-"}</td>
-    `;
-        tableBody.appendChild(tr);
-      });
+      tableBody.innerHTML = data.map(fb => `
+        <tr>
+          <td data-label="Vendedor">${fb.vendedor || "-"}</td>
+          <td data-label="Estrelas">${"★".repeat(fb.estrelas || 0)}${"☆".repeat(5 - (fb.estrelas || 0))}</td>
+          <td data-label="Comentário">${fb.comentario || "-"}</td>
+          <td data-label="Data">${formatDateBR(fb.data) || "-"}</td>
+          <td data-label="IP">${fb.ip || "-"}</td>
+        </tr>
+      `).join("");
     }
 
+    function exportToCSV() {
+      if (feedbacks.length === 0) {
+        alert("Não há dados para exportar.");
+        return;
+      }
 
-    function resetFilters() {
+      const headers = ["Vendedor", "Estrelas", "Comentário", "Data", "IP"];
+      const rows = feedbacks.map(fb => [
+        `"${fb.vendedor || ""}"`,
+        `"${fb.estrelas || ""}"`,
+        `"${(fb.comentario || "").replace(/"/g, '""')}"`,
+        `"${formatDateBR(fb.data) || ""}"`,
+        `"${fb.ip || ""}"`
+      ]);
+
+      let csvContent = headers.join(";") + "\n";
+      rows.forEach(row => {
+        csvContent += row.join(";") + "\n";
+      });
+
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "relatorio_feedbacks.csv";
+      link.style.display = "none";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    filterEmpresa.addEventListener("input", () => {
+      updateFilterButtonState();
+      if (message.textContent) message.textContent = "";
+    });
+
+    filterStartDate.addEventListener("change", () => {
+      updateFilterButtonState();
+      if (message.textContent) message.textContent = "";
+    });
+
+    filterEndDate.addEventListener("change", () => {
+      updateFilterButtonState();
+      if (message.textContent) message.textContent = "";
+    });
+
+    btnFilter.addEventListener("click", () => {
+      loadFeedbacks();
+    });
+
+    btnReset.addEventListener("click", () => {
       filterEmpresa.value = "";
       filterStartDate.value = "";
       filterEndDate.value = "";
       message.textContent = "";
-      updateFilterButtonState();
-      loadFeedbacks();
-    }
-
-    function exportToCSV() {
-      console.log('Exportar feedbacks: ', feedbacks)
-      if (!feedbacks.length) {
-        message.textContent = "Nada para exportar.";
-        return;
-      }
-      let csv = "Empresa/Nome,Estrelas,Comentário,Data,IP\n";
-      feedbacks.forEach(fb => {
-        const row = [
-          fb.empresa || "",
-          fb.rating || "",
-          fb.comment || "",
-          formatDateBR(fb.created_at || fb.createdAt || fb.date),
-          fb.ip_address || "",
-        ];
-        const escapedRow = row.map(col => `"${String(col).replace(/"/g, '""')}"`);
-
-        csv += escapedRow.join(",") + "\n";
-      });
-
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'relatorio_feedbacks.csv';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-
-      message.textContent = "Exportação concluída.";
-    }
-
-
-    // Eventos para atualizar estado do botão Filtrar conforme inputs mudam
-    filterEmpresa.addEventListener("input", updateFilterButtonState);
-    filterStartDate.addEventListener("input", updateFilterButtonState);
-    filterEndDate.addEventListener("input", updateFilterButtonState);
-
-    btnFilter.addEventListener("click", () => {
-      message.textContent = "";
-      loadFeedbacks();
+      btnFilter.disabled = true;
+      tableBody.innerHTML = "";
+      feedbacks = [];
     });
-    btnReset.addEventListener("click", resetFilters);
-    btnExport.addEventListener("click", exportToCSV);
 
-    // Carrega inicialmente sem filtros
+    btnExport.addEventListener("click", () => {
+      exportToCSV();
+    });
+
+    // Carregar dados inicialmente (sem filtro)
     loadFeedbacks();
   </script>
 </body>
