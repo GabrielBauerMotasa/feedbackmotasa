@@ -42,11 +42,18 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
 
+    //Captura o vendedor e armazena no banco
+    const urlParams = new URLSearchParams(window.location.search);
+    const vendedorId = urlParams.get("vendedor");
+
+
     const feedback = {
       rating: parseInt(ratingInput.value),
       comment: feedbackText,
       empresa: empresaInput,
+      vendedor: vendedorId 
     };
+
 
     messageElement.style.display = "none";
     loadingElement.style.display = "inline-block";

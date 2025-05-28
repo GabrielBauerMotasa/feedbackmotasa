@@ -45,7 +45,8 @@ exports.handler = async function (event, context) {
   }
 
   try {
-    const { rating, comment, empresa } = JSON.parse(event.body);
+    const { rating, comment, empresa, vendedor } = JSON.parse(event.body);
+
     const ipAddress = event.headers['x-forwarded-for'] || event.headers['client-ip'] || '';
 
     const now = new Date();
@@ -57,7 +58,9 @@ exports.handler = async function (event, context) {
       ip_address: ipAddress,
       created_at: brNow,
       empresa: empresa || null,
+      vendedor: vendedor || null 
     });
+
 
     return {
       statusCode: 200,
