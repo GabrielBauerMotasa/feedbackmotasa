@@ -59,7 +59,7 @@ exports.handler = async function (event, context) {
     const filters = {};
 
     if (params.vendedor) {
-      filters.vendedor = { $regex: new RegExp(params.vendedor, 'i') };
+      filters.vendedor = params.vendedor;  // busca exata
     }
     if (params.startDate) {
       filters.created_at = filters.created_at || {};
