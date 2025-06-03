@@ -155,6 +155,13 @@ footer {
         margin-top: 20px;
         padding-bottom: 15px;
     }
+
+    html,
+    body {
+        background: #F9F8F3;
+        background-image: none;
+}
+
 }
 
 @media (max-width: 480px) {
@@ -179,18 +186,23 @@ footer {
         height: 90px;
     }
 
-    .navbar > img{
+    .navbar>img {
         height: 68px;
         width: 113px;
         border-radius: 10px;
         margin-left: 12px;
     }
 
-    .navbar > h1{
+    .navbar>h1 {
         font-family: "Montserrat", sans-serif;
         color: #fff;
         margin-left: 12px;
         font-size: 14px;
+    }
+
+    .body {
+        background-size: 100%;
+        background-repeat: no-repeat;
     }
 }
 
