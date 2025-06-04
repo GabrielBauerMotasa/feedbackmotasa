@@ -50,13 +50,12 @@ exports.handler = async function (event, context) {
     const ipAddress = event.headers['x-forwarded-for'] || event.headers['client-ip'] || '';
 
     const now = new Date();
-    const brNow = new Date(now.getTime() - 3 * 60 * 60 * 1000);
 
     const feedback = await Feedback.create({
       rating,
       comment,
       ip_address: ipAddress,
-      created_at: brNow,
+      created_at: new Date(),
       empresa: empresa || null,
       vendedor: vendedor || null 
     });
