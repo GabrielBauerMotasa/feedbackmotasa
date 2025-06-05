@@ -136,8 +136,43 @@ function exportToCSV() {
     message.textContent = "Nada para exportar.";
     return;
   }
-  // Implementação do CSV continua aqui...
+  const headers = ['Atendente', 'Empresa/Nome', 'Estrelas', 'Comentário', 'Data', 'IP'];
+  const rows = feedbacks.map(fb => [
+    fb.vendedor || '-',
+    fb.empresa || '-',
+    fb.rating || '-',
+    `"${(fb.comment || '-').replace(/"/g, '""')}"`,
+    formatDateBR(fb.created_at || fb.createdAt || fb.date),
+    fb.ip_address || '-'
+  ]);
+
+  let csvContent = headers.join(",") + "\n" + rows.map(r => r.join(",")).join("\n");
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `feedbacks_${new Date().toISOString().slice(0,10)}.csv`;
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
+
+// Eventos dos botões e inputs
+btnFilter.addEventListener('click', () => {
+  if (validateFilters()) loadFeedbacks();
+});
+
+btnReset.addEventListener('click', resetFilters);
+
+btnExport.addEventListener('click', exportToCSV);
+
+filterVendedor.addEventListener('input', updateFilterButtonState);
+filterStartDate.addEventListener('input', updateFilterButtonState);
+filterEndDate.addEventListener('input', updateFilterButtonState);
 
 // Inicializa o carregamento dos feedbacks ao abrir a página
 loadFeedbacks();
