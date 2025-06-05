@@ -51,7 +51,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // VALIDAÇÃO DO VENDEDOR - INÍCIO
     const vendedorNum = Number(vendedorId);
     if (!vendedorId || !vendedoresValidos.includes(vendedorNum)) {
-      alert("Vendedor inválido ou não autorizado.");
+      alert("Atendente inválido ou não autorizado.");
       return;
     }
     // VALIDAÇÃO DO VENDEDOR - FIM
