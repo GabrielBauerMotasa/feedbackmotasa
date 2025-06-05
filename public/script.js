@@ -46,7 +46,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     //Captura o vendedor e armazena no banco
     const urlParams = new URLSearchParams(window.location.search);
-    const vendedorId = urlParams.get("vendedor");
+    const vendedorId = urlParams.get("atendente");
 
     // VALIDAÇÃO DO VENDEDOR - INÍCIO
     const vendedorNum = Number(vendedorId);

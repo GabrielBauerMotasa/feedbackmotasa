@@ -339,7 +339,7 @@
       data.forEach(fb => {
         const tr = document.createElement("tr");
         tr.innerHTML = `
-      <td data-label="Vendedor">${fb.vendedor || "-"}</td>
+      <td data-label="Atendente">${fb.vendedor || "-"}</td>
       <td data-label="Empresa/Nome">${fb.empresa || "-"}</td>
       <td data-label="Estrelas">${fb.rating || "-"}</td>
       <td data-label="Comentário">${fb.comment || "-"}</td>
@@ -366,7 +366,7 @@
         message.textContent = "Nada para exportar.";
         return;
       }
-      let csv = "Vendedor,Empresa/Nome,Estrelas,Comentário,Data,IP\n";
+      let csv = "Atendente,Empresa/Nome,Estrelas,Comentário,Data,IP\n";
       feedbacks.forEach(fb => {
         const row = [
           fb.vendedor || "",
