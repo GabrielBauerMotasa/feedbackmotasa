@@ -178,6 +178,12 @@
 </head>
 
 <body>
+  <script>
+    if (sessionStorage.getItem("loggedIn") !== "true") {
+      window.location.href = "login.html";
+    }
+  </script>
+
   <div class="container">
     <h1>Relatório de Feedbacks</h1>
 
