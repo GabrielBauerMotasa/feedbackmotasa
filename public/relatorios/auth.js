@@ -1,3 +1,5 @@
-if (sessionStorage.getItem("loggedIn") !== "true") {
-  window.location.href = "login.html";
+if (!sessionStorage.getItem("token")) {
+  window.location.href = "/relatorios/login.html";
+
 }
+
