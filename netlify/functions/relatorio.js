@@ -39,7 +39,7 @@ exports.handler = async function (event, context) {
   }
 
   // Verifica ID secreto na query string
-  // const params = event.queryStringParameters || {};
+  const params = event.queryStringParameters || {};
   // if (!params.id || params.id !== REPORT_SECRET_ID) {
   //   return {
   //     statusCode: 401,
