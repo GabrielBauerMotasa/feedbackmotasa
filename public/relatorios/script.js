@@ -57,7 +57,6 @@ function updateFilterButtonState() {
 
 function buildQueryString() {
   const params = new URLSearchParams();
-  // Não inclui mais o ID secreto porque não é obrigatório
   if (filterVendedor.value.trim() !== "") {
     params.append("vendedor", filterVendedor.value.trim());
   }
@@ -65,11 +64,14 @@ function buildQueryString() {
     params.append("startDate", filterStartDate.value);
   }
   if (filterEndDate.value) {
-    params.append("endDate", filterEndDate.value);
+    const endDate = new Date(filterEndDate.value);
+    endDate.setDate(endDate.getDate() + 1);
+    const adjustedEndDate = endDate.toISOString().split('T')[0];
+    params.append("endDate", adjustedEndDate);
   }
-
   return params.toString();
 }
+
 
 function loadFeedbacks() {
   if (!validateFilters()) return;
