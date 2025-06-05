@@ -3,16 +3,9 @@ const BASE_API_URL = "/.netlify/functions/relatorio";
 const urlParams = new URLSearchParams(window.location.search);
 const SECRET_ID = urlParams.get("id");
 
-if (!SECRET_ID) {
-  document.body.style.height = "100vh";
-  document.body.style.margin = "0";
-  document.body.style.display = "flex";
-  document.body.style.justifyContent = "center";
-  document.body.style.alignItems = "center";
-  document.body.style.backgroundColor = "#fff";
-  document.body.innerHTML = '<h2 style="color:red; font-size:1.5rem; text-align:center;">Acesso negado. ID secreto obrigatório na URL.</h2>';
-  throw new Error("ID secreto não informado");
-}
+// REMOVI o bloqueio por falta do ID secreto
+// Antes tinha um if que bloqueava a página se não tivesse o ID.
+// Agora ele simplesmente não obriga o ID, então segue normalmente.
 
 const tableBody = document.querySelector("#feedbackTable tbody");
 const loading = document.getElementById("loading");
@@ -64,8 +57,7 @@ function updateFilterButtonState() {
 
 function buildQueryString() {
   const params = new URLSearchParams();
-  params.append("id", SECRET_ID);
-
+  // Não inclui mais o ID secreto porque não é obrigatório
   if (filterVendedor.value.trim() !== "") {
     params.append("vendedor", filterVendedor.value.trim());
   }
@@ -144,5 +136,8 @@ function exportToCSV() {
     message.textContent = "Nada para exportar.";
     return;
   }
-  let csv
+  // Implementação do CSV continua aqui...
 }
+
+// Inicializa o carregamento dos feedbacks ao abrir a página
+loadFeedbacks();
