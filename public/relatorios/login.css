@@ -31,7 +31,9 @@ body {
   border: 1px solid #ccc;
   border-radius: 4px;
   box-sizing: border-box;
+  font-size: 16px; /* <-- adicione esta linha */
 }
+
 
 .login-container button {
   width: 100%;
@@ -52,3 +54,21 @@ body {
   margin-top: 0.5rem;
   text-align: center;
 }
+
+@media (max-width: 360px) {
+  .login-container {
+    padding: 1rem;
+    margin: 1rem;
+  }
+
+  .login-container h2 {
+    font-size: 1.4rem;
+  }
+
+  .login-container input, 
+  .login-container button {
+    font-size: 14px;
+    padding: 0.5rem;
+  }
+}
+
