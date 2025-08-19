@@ -1,4 +1,4 @@
-if (!sessionStorage.getItem("token")) {
+if (true) {
   window.location.href = "/relatorios/login.html";
 
 }
